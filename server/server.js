@@ -9,6 +9,7 @@ const app = express();
 app.use(helmet());
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
+app.use('/api/auth', require('./routes/authRoutes'));
 
 // route test
 app.get('/', (req, res) => {
@@ -23,7 +24,7 @@ mongoose.connect(process.env.MONGO_URI, {
 .then(() => console.log('MongoDB connected'))
 .catch(err => console.error(err));
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
