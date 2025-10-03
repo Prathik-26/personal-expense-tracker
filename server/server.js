@@ -14,15 +14,19 @@ app.use(helmet());
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 
-//routes
+// Authentication route
 app.use('/api/auth', require('./routes/authRoutes'));
 
-// route test
+// Expense route - protected by auth
+const expenseRoutes = require('./routes/expenseRoutes');
+app.use('/api/expenses', expenseRoutes);
+
+// Health check route
 app.get('/', (req, res) => {
     res.send("Expense tracker is running");
 });
 
-//protected route
+// Protected route - requires valid JWT token
 app.get('/api/protected', authMiddleware, (req, res) => {
     res.json({message: `Hello ${req.user.id}, you accessed a protected route!`})
 })
