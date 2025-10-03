@@ -5,16 +5,27 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 
+const authMiddleware = require('./middlewares/authMiddleware');
+
+
 const app = express();
+
 app.use(helmet());
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
+
+//routes
 app.use('/api/auth', require('./routes/authRoutes'));
 
 // route test
 app.get('/', (req, res) => {
     res.send("Expense tracker is running");
 });
+
+//protected route
+app.get('/api/protected', authMiddleware, (req, res) => {
+    res.json({message: `Hello ${req.user.id}, you accessed a protected route!`})
+})
 
 // mongoDB connection
 mongoose.connect(process.env.MONGO_URI, {
