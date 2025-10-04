@@ -1,6 +1,5 @@
 const Expense = require("../models/Expense");
 
-
 //  Add new expense
 // POST /api/expenses
 exports.addExpense = async (req, res) => {
@@ -15,37 +14,34 @@ exports.addExpense = async (req, res) => {
       user: req.user.id,
       title,
       amount,
-      category: category || 'General',
+      category: category || "General",
       date: date || Date.now(),
-      notes: notes || ''
+      notes: notes || "",
     });
 
     const savedExpense = await expense.save();
     res.status(201).json(savedExpense);
-
   } catch (err) {
-    console.error('Add expense error:', err);
+    console.error("Add expense error:", err);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-
 //  Get expenses with filters & pagination
 //  GET /api/expenses
-exports.getExpenses = async(req, res) => {
+exports.getExpenses = async (req, res) => {
   try {
-    
     //extract query params
-    const {category, startDate, endDate, page=1, limit=10} = req.query;
+    const { category, startDate, endDate, page = 1, limit = 10 } = req.query;
 
     //build mongo query
-    let query = {user: req.user.id} // only logged in user
+    let query = { user: req.user.id }; // only logged in user
 
-    if(category) {
+    if (category) {
       query.category = category; //filter by query
     }
 
-     if (startDate && endDate) {
+    if (startDate && endDate) {
       query.date = { $gte: new Date(startDate), $lte: new Date(endDate) };
     } else if (startDate) {
       query.date = { $gte: new Date(startDate) };
@@ -53,31 +49,83 @@ exports.getExpenses = async(req, res) => {
       query.date = { $lte: new Date(endDate) };
     }
 
-     //Convert page/limit to numbers
-    const pageNum = parseInt(page,10);
+    //Convert page/limit to numbers
+    const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
-    const skip = (pageNum-1)*limitNum;
-
+    const skip = (pageNum - 1) * limitNum;
 
     //fetch expense + total count
     const expenses = await Expense.find(query)
-      .sort({date: -1})
+      .sort({ date: -1 })
       .skip(skip)
-      .limit(limitNum)
+      .limit(limitNum);
 
     const total = await Expense.countDocuments(query);
-
 
     res.json({
       total,
       page: pageNum,
-      pages: Math.ceil(total/limitNum),
-      expenses
+      pages: Math.ceil(total / limitNum),
+      expenses,
     });
-
-
   } catch (err) {
     console.error(err.message);
-    res.status(500).json({message: "Server Error"})
+    res.status(500).json({ message: "Server Error" });
   }
-}
+};
+
+// Update an expense
+// PUT /api/expenses/:id
+exports.updateExpense = async (req, res) => {
+  try {
+    const expenseId = req.params.id;
+
+    const expense = await Expense.findOne({
+      _id: expenseId,
+      user: req.user.id,
+    });
+    if (!expense) {
+      return res.status(400).json({ message: "Expense not found" });
+    }
+
+    const { title, amount, category, date, notes } = req.body;
+
+    // only overwrite fields that are provided in the request
+    if (title !== undefined) expense.title = title;
+    if (amount !== undefined) expense.amount = amount;
+    if (category !== undefined) expense.category = category;
+    if (date !== undefined) expense.date = date;
+    if (notes !== undefined) expense.notes = notes;
+
+    //save updated doc
+    const updated = await expense.save();
+
+    return res.json(updated);
+  } catch (err) {
+    console.error("updateExpense error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Delete an expense
+// DELETE /api/expenses/:id
+
+exports.deleteExpense = async (req, res) => {
+  try {
+    const expenseId = req.params.id;
+
+    const expense = await Expense.findOneAndDelete({
+      _id: expenseId,
+      user: req.user.id,
+    });
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found" });
+    }
+
+    return res.json({ message: "Expense deleted successfully" });
+  } catch (err) {
+    console.error("deleteExpense error:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
