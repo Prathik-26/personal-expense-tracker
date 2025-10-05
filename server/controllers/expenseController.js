@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Expense = require("../models/Expense");
 
 //  Add new expense
@@ -20,10 +21,10 @@ exports.addExpense = async (req, res) => {
     });
 
     const savedExpense = await expense.save();
-    res.status(201).json(savedExpense);
+    return res.status(201).json(savedExpense);
   } catch (err) {
     console.error("Add expense error:", err);
-    res.status(500).json({ message: "Server Error" });
+    return res.status(500).json({ message: "Server Error" });
   }
 };
 
@@ -127,5 +128,45 @@ exports.deleteExpense = async (req, res) => {
   } catch (err) {
     console.error("deleteExpense error:", err);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+// GET /api/summary
+exports.getSummary = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const userObjectId = mongoose.Types.ObjectId.createFromHexString(userId);
+
+    const summary = await Expense.aggregate([
+      { $match: { user: userObjectId } },
+      {
+        $group: {
+          _id: {
+            month: { $month: "$date" },
+            year: { $year: "$date" },
+            category: "$category",
+          },
+          totalSpent: { $sum: "$amount" },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } },
+    ]);
+
+    const formatted = summary.map((item) => ({
+      month: `${item._id.month}-${item._id.year}`,
+      category: item._id.category || "General",
+      totalSpent: item.totalSpent,
+      transactions: item.count,
+    }));
+
+    return res.json(formatted);
+  } catch (err) {
+    console.error("getSummary error:", err);
+    return res.status(500).json({ message: "Server Error" });
   }
 };

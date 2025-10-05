@@ -4,7 +4,7 @@ const router = express.Router();
 const expenseController = require("../controllers/expenseController");
 const auth = require("../middlewares/authMiddleware");
 
-const runValidation = (res, req, next) => {
+const runValidation = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty())
     return res.status(400).json({ errors: errors.array() });
@@ -69,5 +69,8 @@ router.put(
 router.delete("/:id", auth, (req, res) =>
   expenseController.deleteExpense(req, res)
 );
+
+//expense summary
+router.get("/summary", auth, (req, res) => expenseController.getSummary(req, res));
 
 module.exports = router;
