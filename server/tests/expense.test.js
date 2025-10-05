@@ -9,9 +9,8 @@ let expenseId;
 beforeAll(async () => {
   const uri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
   await mongoose.connect(uri);
-  await mongoose.connection.db.dropDatabase(); // clean test DB
+//   await mongoose.connection.db.dropDatabase(); 
 
-  // Create a new user for this test suite
   const timestamp = Date.now();
   await request(app)
     .post("/api/auth/register")
@@ -21,7 +20,6 @@ beforeAll(async () => {
       password: "123456",
     });
 
-  // Login and store token
   const res = await request(app)
     .post("/api/auth/login")
     .send({
@@ -33,7 +31,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.db.dropDatabase(); // clean again after tests
+//   await mongoose.connection.db.dropDatabase();
   await mongoose.connection.close();
 });
 
