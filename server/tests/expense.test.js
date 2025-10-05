@@ -9,7 +9,7 @@ let expenseId;
 beforeAll(async () => {
   const uri = process.env.MONGO_URI_TEST || process.env.MONGO_URI;
   await mongoose.connect(uri);
-//   await mongoose.connection.db.dropDatabase(); 
+  await mongoose.connection.db.dropDatabase();
 
   const timestamp = Date.now();
   await request(app)
@@ -31,7 +31,7 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-//   await mongoose.connection.db.dropDatabase();
+  await mongoose.connection.db.dropDatabase();
   await mongoose.connection.close();
 });
 
